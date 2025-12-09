@@ -1,24 +1,29 @@
 
 import React, { useState } from 'react';
-import { HashRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { HashRouter, Routes, Route, useLocation, Link, Navigate } from 'react-router-dom';
 import { Sidebar } from './components/organisms/Sidebar';
 import { Dashboard } from './pages/Dashboard';
-import { ProjectDetail } from './pages/ProjectDetail';
-import { Projects } from './pages/Projects';
 import { Tickets } from './pages/Tickets';
+import { CreateTicket } from './pages/CreateTicket';
+import { TicketDetail } from './pages/TicketDetail';
 import { Chat } from './pages/Chat';
-import { ReviewsPage } from './pages/ReviewsPage';
 import { Invoices } from './pages/Invoices';
+import { InvoiceDetail } from './pages/InvoiceDetail';
+import ClientDetail from './pages/ClientDetail';
 import { Settings } from './pages/Settings';
-import { Bell, Search, Menu } from 'lucide-react';
-import { USERS } from './services/mockData';
-import { ProjectProvider } from './contexts/ProjectContext';
+import Profile from './pages/Profile';
+import { Bell, Search, Menu, LogOut } from 'lucide-react';
+import { ErrorBoundary } from './components/ErrorBoundary';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { SignIn } from './pages/auth/SignIn';
+import { SignUp } from './pages/auth/SignUp';
+import { ProtectedRoute } from './components/ProtectedRoute';
 
 const NotFound = () => <div className="text-white text-2xl p-10">404 - Page Not Found</div>;
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const location = useLocation();
+  const { user, profile, signOut } = useAuth();
 
   return (
     <div className="flex h-screen bg-black overflow-hidden">
@@ -58,12 +63,25 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
               <span className="absolute -top-1 -right-1 w-2 h-2 bg-brand rounded-full"></span>
             </div>
             
-            <div className="flex items-center gap-3 pl-6 border-l border-neutral-800">
-              <div className="text-right hidden sm:block">
-                <p className="text-sm font-bold text-white leading-none">{USERS[0].name}</p>
-                <p className="text-xs text-neutral-500 mt-1">{USERS[0].role}</p>
-              </div>
-              <img src={USERS[0].avatar} alt="Profile" className="w-10 h-10 rounded-full border-2 border-brand-surface" />
+            <div className="flex items-center gap-4 pl-6 border-l border-neutral-800">
+              <Link to="/profile" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+                <div className="text-right hidden sm:block">
+                  <p className="text-sm font-bold text-white leading-none">{profile?.name || user?.email}</p>
+                  <p className="text-xs text-neutral-500 mt-1">{profile?.role || 'User'}</p>
+                </div>
+                <img 
+                  src={profile?.avatar || `https://ui-avatars.com/api/?name=${profile?.name || 'User'}&background=random`} 
+                  alt="Profile" 
+                  className="w-10 h-10 rounded-full border-2 border-brand-surface" 
+                />
+              </Link>
+              <button 
+                onClick={() => signOut()} 
+                className="text-neutral-400 hover:text-white transition-colors"
+                title="Sign out"
+              >
+                <LogOut className="w-5 h-5" />
+              </button>
             </div>
           </div>
         </header>
@@ -81,23 +99,36 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
 const App: React.FC = () => {
   return (
-    <ProjectProvider>
+    <AuthProvider>
       <HashRouter>
-        <Layout>
-          <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/projects" element={<Projects />} />
-            <Route path="/projects/:id" element={<ProjectDetail />} />
-            <Route path="/tickets" element={<Tickets />} />
-            <Route path="/invoices" element={<Invoices />} />
-            <Route path="/chat" element={<Chat />} />
-            <Route path="/reviews" element={<ReviewsPage />} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </Layout>
+        <Routes>
+          <Route path="/signin" element={<SignIn />} />
+          <Route path="/signup" element={<SignUp />} />
+          
+          <Route path="/*" element={
+            <ProtectedRoute>
+              <Layout>
+                <ErrorBoundary>
+                  <Routes>
+                    <Route path="/" element={<Dashboard />} />
+                    <Route path="/tickets" element={<Tickets />} />
+                    <Route path="/tickets/new" element={<CreateTicket />} />
+                    <Route path="/tickets/:id" element={<TicketDetail />} />
+                    <Route path="/invoices" element={<Invoices />} />
+                    <Route path="/invoices/:id" element={<InvoiceDetail />} />
+                    <Route path="/clients/:id" element={<ClientDetail />} />
+                    <Route path="/chat" element={<Chat />} />
+                    <Route path="/settings" element={<Settings />} />
+                    <Route path="/profile" element={<Profile />} />
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </ErrorBoundary>
+              </Layout>
+            </ProtectedRoute>
+          } />
+        </Routes>
       </HashRouter>
-    </ProjectProvider>
+    </AuthProvider>
   );
 };
 
