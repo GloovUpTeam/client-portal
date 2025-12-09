@@ -1,10 +1,10 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Ticket } from '../../types';
+import { TicketDetail } from '../../types/tickets';
 import { MessageSquare, Clock } from 'lucide-react';
 
 interface Props {
-  ticket: Ticket & { messages: number };
+  ticket: TicketDetail;
 }
 
 export const TicketCard: React.FC<Props> = ({ ticket }) => {
@@ -94,12 +94,12 @@ export const TicketCard: React.FC<Props> = ({ ticket }) => {
           )}
           <div className="flex items-center gap-1">
             <MessageSquare className="w-4 h-4" />
-            <span className="text-xs">{ticket.messages}</span>
+            <span className="text-xs">{ticket.comments.length}</span>
           </div>
         </div>
         <div className="flex items-center gap-1 text-xs">
           <Clock className="w-3 h-3" />
-          {formatDate(ticket.createdDate)}
+          {formatDate(ticket.createdAt)}
         </div>
       </div>
     </div>

@@ -1,7 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { TicketDetail as TicketDetailType } from '../types/tickets';
-import { fetchTicketById } from '../services/ticketsService';
+import { 
+  fetchTicketById, 
+  addComment, 
+  updateTicketStatus, 
+  updateTicketPriority, 
+  removeAttachment 
+} from '../services/ticketsService';
 import { TicketChat } from '../components/tickets/TicketChat';
 import { AttachmentList } from '../components/tickets/AttachmentList';
 import {
@@ -26,6 +32,22 @@ export const TicketDetail: React.FC = () => {
       fetchTicketById(id).then(({ data }) => {
         if (data) {
             // Map DB ticket to TicketDetailType
+            const mappedComments = (data.comments || []).map((c: any) => ({
+                id: c.id,
+                ticketId: c.ticket_id,
+                authorId: c.author_id,
+                author: {
+                    id: c.author?.id || '',
+                    name: c.author?.full_name || 'Unknown',
+                    email: c.author?.email || '',
+                    avatar: c.author?.avatar_url || '',
+                    role: c.author?.role || 'Client'
+                },
+                text: c.text,
+                attachments: c.attachments || [],
+                createdAt: c.created_at
+            }));
+
             const mappedTicket: TicketDetailType = {
                 id: data.id,
                 title: data.title,
@@ -33,10 +55,25 @@ export const TicketDetail: React.FC = () => {
                 priority: (data.priority as any) || 'Medium',
                 status: (data.status as any) || 'Open',
                 creatorId: data.client_id || '',
-                creator: { id: data.client_id || '', name: 'User', email: '', avatar: '', role: 'Client' },
+                creator: { 
+                    id: data.created_by?.id || data.client_id || '', 
+                    name: data.created_by?.full_name || 'User', 
+                    email: data.created_by?.email || '', 
+                    avatar: data.created_by?.avatar_url || '', 
+                    role: data.created_by?.role || 'Client' 
+                },
                 assigneeId: data.assigned_to,
-                attachments: [], // TODO: fetch attachments
-                comments: [], // TODO: fetch comments
+                assignee: data.assign_to ? {
+                    id: data.assign_to.id,
+                    name: data.assign_to.full_name,
+                    email: data.assign_to.email,
+                    avatar: data.assign_to.avatar_url,
+                    role: data.assign_to.role
+                } : undefined,
+                attachments: (data.attachments || []).map((a: any) => 
+                    typeof a === 'string' ? { id: a, name: 'Attachment', url: a, size: 0, mime: '', uploadedAt: new Date().toISOString() } : a
+                ),
+                comments: mappedComments, 
                 activities: [], // TODO: fetch activities
                 createdAt: data.created_at || new Date().toISOString(),
                 updatedAt: data.created_at || new Date().toISOString(),
@@ -104,41 +141,57 @@ export const TicketDetail: React.FC = () => {
     }
   };
 
-  const handleAddComment = (input: any) => {
+  const handleAddComment = async (input: any) => {
     try {
-      const newComment = ticketsService.addComment(input);
+      if (!ticket) return;
+      await addComment(input);
       // Refresh ticket data
-      const updatedTicket = ticketsService.getTicketById(ticket.id);
-      if (updatedTicket) {
-        setTicket(updatedTicket);
+      const { data } = await fetchTicketById(ticket.id);
+      if (data) {
+        // Re-map logic (simplified for brevity, ideally extract to function)
+        // For now, just trigger a reload or update state manually if needed
+        // But since we have the full mapping logic in useEffect, maybe we can just trigger a re-fetch?
+        // Or just copy the mapping logic here.
+        // Let's just reload the page or re-run the effect by depending on something? 
+        // Better: extract mapping logic. But for now, I'll just copy-paste the mapping or rely on a state update.
+        // Actually, let's just update the comments list locally if possible, or re-fetch.
+        // Re-fetching is safer.
+        window.location.reload(); // Simple but effective for now to ensure full sync
       }
     } catch (error) {
       console.error('Error adding comment:', error);
     }
   };
 
-  const handleStatusChange = (newStatus: TicketDetailType['status']) => {
+  const handleStatusChange = async (newStatus: TicketDetailType['status']) => {
     try {
-      const updatedTicket = ticketsService.updateTicketStatus(ticket.id, newStatus);
-      setTicket(updatedTicket);
+      if (!ticket) return;
+      await updateTicketStatus(ticket.id, newStatus);
+      setTicket(prev => prev ? { ...prev, status: newStatus } : null);
     } catch (error) {
       console.error('Error updating status:', error);
     }
   };
 
-  const handlePriorityChange = (newPriority: TicketDetailType['priority']) => {
+  const handlePriorityChange = async (newPriority: TicketDetailType['priority']) => {
     try {
-      const updatedTicket = ticketsService.updateTicketPriority(ticket.id, newPriority);
-      setTicket(updatedTicket);
+      if (!ticket) return;
+      await updateTicketPriority(ticket.id, newPriority);
+      setTicket(prev => prev ? { ...prev, priority: newPriority } : null);
     } catch (error) {
       console.error('Error updating priority:', error);
     }
   };
 
-  const handleRemoveAttachment = (attachmentId: string) => {
+  const handleRemoveAttachment = async (attachmentId: string) => {
     try {
-      const updatedTicket = ticketsService.removeAttachment(ticket.id, attachmentId);
-      setTicket(updatedTicket);
+      if (!ticket) return;
+      await removeAttachment(ticket.id, attachmentId);
+      // Optimistic update
+      setTicket(prev => prev ? {
+          ...prev,
+          attachments: prev.attachments.filter(a => a.id !== attachmentId && a.url !== attachmentId)
+      } : null);
     } catch (error) {
       console.error('Error removing attachment:', error);
     }

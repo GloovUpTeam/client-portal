@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Card } from '../components/ui/Card';
-import { ProfileForm, NotificationsForm, AppearanceForm, SecurityForm } from '../components/settings';
+import { ProfileSettings } from '../components/settings/ProfileSettings';
+import { NotificationsForm, AppearanceForm, SecurityForm } from '../components/settings';
 import { User, Bell, Lock, Palette, CheckCircle } from 'lucide-react';
 
 type TabId = 'profile' | 'notifications' | 'appearance' | 'security';
@@ -30,7 +31,7 @@ export const Settings: React.FC = () => {
   const renderContent = () => {
     switch (activeTab) {
       case 'profile':
-        return <ProfileForm onSuccess={handleSuccess} />;
+        return <ProfileSettings />;
       case 'notifications':
         return <NotificationsForm onSuccess={handleSuccess} />;
       case 'appearance':

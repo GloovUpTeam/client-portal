@@ -1,5 +1,5 @@
 import React from 'react';
-import { TeamMember } from '../../mocks/dashboardMocks';
+import { TeamMember } from '../../types/user';
 import { Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { DateRange } from './DateRangeFilter';
@@ -38,7 +38,7 @@ export const DashboardTeamAssignedCard: React.FC<Props> = ({ team, dateRange }) 
               title={member.name}
             >
               <img
-                src={member.avatarUrl || 'https://picsum.photos/id/1005/200'}
+                src={member.avatar || 'https://picsum.photos/id/1005/200'}
                 alt={member.name}
                 className="w-10 h-10 rounded-full border-2 border-neutral-800 group-hover:border-brand transition-colors"
               />

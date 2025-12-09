@@ -8,7 +8,7 @@ export const userService = {
       const { data, error } = await supabase
         .from('users')
         .select('*')
-        .eq('auth_id', userId)
+        .eq('id', userId)
         .single();
       
       if (error) {
@@ -36,7 +36,7 @@ export const userService = {
     const { data, error } = await supabase
       .from('users')
       .update(profile)
-      .eq('auth_id', userId)
+      .eq('id', userId)
       .select()
       .single();
     

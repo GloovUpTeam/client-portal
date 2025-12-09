@@ -1,10 +1,10 @@
 import React from 'react';
-import { DashboardProject } from '../../mocks/dashboardMocks';
+import { Project } from '../../types/projects';
 import { TrendingUp } from 'lucide-react';
 import { DateRange } from './DateRangeFilter';
 
 interface Props {
-  project: DashboardProject;
+  project: Project;
   dateRange?: DateRange;
 }
 
@@ -21,8 +21,8 @@ export const DashboardProjectStatusCard: React.FC<Props> = ({ project, dateRange
 
   // Simple filter stub: check if project was created or updated within range
   const isInRange = dateRange ? (
-    (project.createdAt >= dateRange.start && project.createdAt <= dateRange.end) ||
-    (project.updatedAt >= dateRange.start && project.updatedAt <= dateRange.end)
+    (project.created_at >= dateRange.start && project.created_at <= dateRange.end) ||
+    (project.updated_at >= dateRange.start && project.updated_at <= dateRange.end)
   ) : true;
 
   if (!isInRange) {
@@ -67,7 +67,7 @@ export const DashboardProjectStatusCard: React.FC<Props> = ({ project, dateRange
         
         <div className="flex items-center gap-1 text-xs text-neutral-500">
           <span>●</span>
-          <span className="text-brand">{project.milestones.length} milestones</span>
+          <span className="text-brand">{(project.milestones || []).length} milestones</span>
         </div>
       </div>
     </div>

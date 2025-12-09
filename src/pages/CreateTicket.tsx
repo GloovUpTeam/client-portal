@@ -1,23 +1,27 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { TicketForm } from '../components/tickets/TicketForm';
-import { createTicket } from '../services/ticketsService';
+import { useTickets } from '../hooks/useTickets';
+import { useAuth } from '../contexts/AuthContext';
 import { CreateTicketInput } from '../types/tickets';
-import { supabase } from '../config/supabaseClient';
+import toast from 'react-hot-toast';
 
 export const CreateTicket: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const renewalData = location.state?.renewalData;
-  const [userId, setUserId] = useState<string | null>(null);
+  const { createTicket } = useTickets();
+  const { user, loading } = useAuth();
+  const loadingRef = React.useRef(loading);
+  const userRef = React.useRef(user);
 
-  useEffect(() => {
-    const getUser = async () => {
-        const { data: { session } } = await supabase.auth.getSession();
-        setUserId(session?.user?.id || null);
-    };
-    getUser();
-  }, []);
+  React.useEffect(() => {
+    loadingRef.current = loading;
+  }, [loading]);
+
+  React.useEffect(() => {
+    userRef.current = user;
+  }, [user]);
+  const renewalData = location.state?.renewalData;
 
   const getInitialValues = (): Partial<CreateTicketInput> | undefined => {
     if (!renewalData) return undefined;
@@ -36,33 +40,56 @@ export const CreateTicket: React.FC = () => {
     };
   };
 
-
   const handleSubmit = async (data: CreateTicketInput) => {
-    if (!userId) {
-        console.error("No user logged in");
-        alert("You must be logged in to create a ticket.");
-        return;
-    }
-    
-    console.log('Submitting ticket:', data);
+    let submitting = true;
     try {
-        const { ticket, error } = await createTicket({
-            title: data.title,
-            description: data.description,
-            priority: data.priority,
-            client_id: userId,
-            attachments: data.attachments as File[]
+      // If auth is still initializing, wait a short while for it to finish
+      if (loadingRef.current) {
+        await new Promise<void>((resolve) => {
+          const start = Date.now();
+          const interval = setInterval(() => {
+            if (!loadingRef.current || Date.now() - start > 5000) {
+              clearInterval(interval);
+              resolve();
+            }
+          }, 100);
         });
-        
-        if (error) throw error;
+      }
 
-        if (ticket) {
-            console.log('Ticket created:', ticket);
-            navigate(`/tickets/${ticket.id}`);
+      // Check final auth state
+      if (!userRef.current) {
+        toast.error('You must be logged in to create a ticket');
+        return;
+      }
+
+      const payload = {
+        title: data.title,
+        description: data.description,
+        priority: data.priority.toLowerCase(),
+        attachments: data.attachments
+      };
+      try {
+        await createTicket(payload);
+        toast.success('Ticket created successfully');
+        navigate('/tickets');
+      } catch (error: any) {
+        console.error('[createTicket] failed', {
+          message: error?.message,
+          details: error?.details,
+          request: payload
+        });
+        if (String(error).toLowerCase().includes('must be logged in')) {
+          toast.error('You must be logged in to create a ticket');
+        } else {
+          toast.error('Failed to create ticket: ' + (error?.message || 'Unknown error'));
         }
-    } catch (err: any) {
-        console.error('Failed to create ticket', err);
-        alert(err.message || 'Failed to create ticket.');
+      }
+    } catch (err) {
+      console.error('[CreateTicket] Unexpected error:', err);
+      toast.error('An unexpected error occurred while creating the ticket.');
+    } finally {
+      submitting = false;
+      // If you have a submitting/loading state, clear it here
     }
   };
 

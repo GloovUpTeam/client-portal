@@ -8,7 +8,7 @@ export async function signUp(email: string, password: string, fullName?: string,
   if (data?.user) {
     const userId = data.user.id
     await supabase.from('users').insert({
-      auth_id: userId,
+      id: userId,
       email,
       full_name: fullName ?? null,
       role: role ?? 'client'

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Renewal } from '../../mocks/dashboardMocks';
+import { Renewal } from '../../types/invoices';
 import { Server, Globe, ExternalLink, Plus } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { DateRange } from './DateRangeFilter';

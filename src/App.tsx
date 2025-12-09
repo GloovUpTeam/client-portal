@@ -14,10 +14,12 @@ import { Settings } from './pages/Settings';
 import Profile from './pages/Profile';
 import { Bell, Search, Menu, LogOut } from 'lucide-react';
 import { ErrorBoundary } from './components/ErrorBoundary';
+// import { DevHealthCheck } from './components/DevHealthCheck'; // DISABLED - was causing infinite loop
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { SignIn } from './pages/auth/SignIn';
 import { SignUp } from './pages/auth/SignUp';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import { Toaster } from 'react-hot-toast';
 
 const NotFound = () => <div className="text-white text-2xl p-10">404 - Page Not Found</div>;
 
@@ -39,11 +41,9 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
              
              {/* Mobile Logo Display */}
              <div className="lg:hidden flex items-center gap-2">
-                <img 
-                  src="/mnt/data/Gloov Up GLogo PNG.png" 
-                  alt="Gloov Up" 
-                  className="h-8 w-auto object-contain"
-                />
+                <div className="h-8 w-8 rounded-full bg-brand flex items-center justify-center">
+                  <span className="text-black font-bold text-xl">G</span>
+                </div>
                 <span className="text-lg font-display font-bold text-white tracking-tight">Gloov Up</span>
              </div>
           </div>
@@ -66,11 +66,11 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
             <div className="flex items-center gap-4 pl-6 border-l border-neutral-800">
               <Link to="/profile" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
                 <div className="text-right hidden sm:block">
-                  <p className="text-sm font-bold text-white leading-none">{profile?.name || user?.email}</p>
+                  <p className="text-sm font-bold text-white leading-none">{profile?.full_name || user?.email}</p>
                   <p className="text-xs text-neutral-500 mt-1">{profile?.role || 'User'}</p>
                 </div>
                 <img 
-                  src={profile?.avatar || `https://ui-avatars.com/api/?name=${profile?.name || 'User'}&background=random`} 
+                  src={profile?.avatar_url || `https://ui-avatars.com/api/?name=${profile?.full_name || 'User'}&background=random`} 
                   alt="Profile" 
                   className="w-10 h-10 rounded-full border-2 border-brand-surface" 
                 />
@@ -100,6 +100,8 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 const App: React.FC = () => {
   return (
     <AuthProvider>
+      <Toaster position="top-right" />
+      {/* Temporarily disabled: {import.meta.env.DEV && <DevHealthCheck />} */}
       <HashRouter>
         <Routes>
           <Route path="/signin" element={<SignIn />} />

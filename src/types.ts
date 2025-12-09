@@ -1,6 +1,7 @@
 export interface User {
   id: string;
   name: string;
+  email?: string;
   role: 'Admin' | 'PM' | 'Client' | 'Dev' | 'Management' | 'Developer' | 'Marketing';
   avatar: string;
   isOnline?: boolean;

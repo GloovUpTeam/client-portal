@@ -1,3 +1,12 @@
+export interface TeamMember {
+  id: string;
+  name: string;
+  role: string;
+  avatar: string;
+  joinedAt: string;
+  profileUrl?: string;
+}
+
 export interface UserProfile {
   id: string;
   name: string;

@@ -1,7 +1,7 @@
 -- users (profiles)
+-- We link id directly to auth.users(id) to simplify FKs
 create table if not exists public.users (
-  id uuid primary key default gen_random_uuid(), -- for app-managed id if not using auth uid
-  auth_id uuid, -- store supabase auth uid when using supabase auth
+  id uuid primary key references auth.users(id) on delete cascade,
   email text not null unique,
   full_name text,
   role text default 'client',
@@ -54,16 +54,15 @@ create table if not exists public.invoice_items (
   created_at timestamptz default now()
 );
 
--- Enable RLS (only if you will add policies)
+-- Enable RLS
 alter table public.tickets enable row level security;
 alter table public.invoices enable row level security;
 
--- Example policy: allow authenticated users to select their own tickets (matching client_id)
+-- Policies
 create policy "select own tickets" on public.tickets
   for select
-  using (auth.uid()::text = client_id::text);
+  using (auth.uid() = client_id);
 
--- Example policy to allow insert for authenticated (dev only)
 create policy "insert tickets for auth" on public.tickets
   for insert
-  with check (auth.uid()::text = client_id::text);
+  with check (auth.uid() = client_id);
